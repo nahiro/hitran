@@ -632,7 +632,7 @@ int GetOpt(int argn,char **args)
       case 'n':
         errno = 0;
         ntmp = strtol(optarg,&p,10);
-        if(errno!=ERANGE && *p=='\0' && ntmp>=1996 && ntmp<=2012) hver = ntmp;
+        if(errno!=ERANGE && *p=='\0' && ntmp>=1996 && ntmp<=2016) hver = ntmp;
         else
         {
           fprintf(stderr,"HITRAN version -> out of range %s\n",optarg);

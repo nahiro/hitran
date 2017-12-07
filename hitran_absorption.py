@@ -16,6 +16,8 @@ HITRAN2008_PARDIR = '/usr/local/HITRAN/hitran08/HITRAN2008/By-Molecule/Uncompres
 HITRAN2008_MOLPARAM = '/usr/local/HITRAN/hitran08/Global_Data/molparam.txt'
 HITRAN2012_PARDIR = '/usr/local/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files'
 HITRAN2012_MOLPARAM = '/usr/local/HITRAN/HITRAN2012/Global-Data/molparam.txt'
+HITRAN2016_PARDIR = '/usr/local/HITRAN/HITRAN2016/HITRAN2016/By-Molecule/Uncompressed-files'
+HITRAN2016_MOLPARAM = '/usr/local/HITRAN/HITRAN2016/Global-Data/molparam.txt'
 
 # Default values
 HVER = 2012          # HITRAN version
@@ -58,6 +60,8 @@ if opts.pardir is None:
         opts.pardir = HITRAN2004_PARDIR
     elif opts.hver == 2008:
         opts.pardir = HITRAN2008_PARDIR
+    elif opts.hver == 2016:
+        opts.pardir = HITRAN2016_PARDIR
     else:
         opts.pardir = HITRAN2012_PARDIR
 if opts.molparam is None:
@@ -65,6 +69,8 @@ if opts.molparam is None:
         opts.molparam = HITRAN2004_MOLPARAM
     elif opts.hver == 2008:
         opts.molparam = HITRAN2008_MOLPARAM
+    elif opts.hver == 2016:
+        opts.molparam = HITRAN2016_MOLPARAM
     else:
         opts.molparam = HITRAN2012_MOLPARAM
 
@@ -146,7 +152,7 @@ if not opts.lorentz:
         mass = mas[spec][opts.niso-1]
     command += ' -M %.4f'%(mass)
 command += ' -p %.6e -o %.6e -R %.6e'%(opts.pres,opts.temp,opts.mixr)
-command += ' <%s/%02d_hit%02d.par >%s'%(opts.pardir,opts.spec,opts.hver%100,fnam)
+command += ' <%s >%s'%(os.path.join(opts.pardir,'%02d_hit%02d.par'%(opts.spec,opts.hver%100)),fnam)
 call(command,shell=True)
 x,y = np.loadtxt(fnam,unpack=True)
 if not opts.batch:

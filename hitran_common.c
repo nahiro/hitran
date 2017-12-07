@@ -25,9 +25,11 @@
 #define		NMOL04			38
 #define		NMOL08			41
 #define		NMOL12			51
+#define		NMOL16			51
 #define		MAXISO04		20
 #define		MAXISO08		20
 #define		MAXISO12		20
+#define		MAXISO16		20
 #define		NSPECI			85
 #define		NRANGE			3
 #define		NPOL			4
@@ -124,6 +126,7 @@ double tips96(int im,int ii,double t);
 double tips04(int im,int ii,double t);
 double tips08(int im,int ii,double t);
 double tips12(int im,int ii,double t);
+double tips16(int im,int ii,double t);
 double (*tips)(int im,int ii,double t);
 double intensity(double t,const struct hitran96 *h);
 double width(double t,double p,double ps,const struct hitran96 *h);
@@ -143,6 +146,7 @@ int get_dbl(char *str,int start,int size,double *value);
 extern void bd_tips_2004_();
 extern void bd_tips_2008_();
 extern void bd_tips_2012_();
+extern void bd_tips_2016_();
 
 int get_coeff(void)
 {
@@ -472,6 +476,37 @@ double tips12(int im,int ii,double t)
                                      // no data for HNO3_156, HF_29, HCl_25, HCl_27,
                                      // HBr_29, HBr_21, HI_27, N2_45, COF2_369, SO3 (47)
                                      // H2 (45)->47
+  if(fabs(qt) < 1.0e-50)
+  {
+    fprintf(stderr,"Warning, qt=%13.6e is modified to be 1.0 at t=%13.6e\n",qt,t);
+    return 1.0;
+  }
+
+  return qt;
+}
+
+double tips16(int im,int ii,double t)
+{
+  double qt,gi;
+
+  if(im<1 || im>NMOL16 || ii<1 || ii>MAXISO16)
+  {
+    if(im==2 && ii==0)
+    {
+      ii = 10;
+    }
+    else
+    {
+      fprintf(stderr,"Invalid input >>> (%d,%d)\n",im,ii);
+      return NAN;
+    }
+  }
+  if(t<70.0 || t>3000.0)
+  {
+    fprintf(stderr,"Error, temperature out of range >>> %13.4e\n",t);
+    return NAN;
+  }
+  bd_tips_2016_(&im,&t,&ii,&gi,&qt);
   if(fabs(qt) < 1.0e-50)
   {
     fprintf(stderr,"Warning, qt=%13.6e is modified to be 1.0 at t=%13.6e\n",qt,t);

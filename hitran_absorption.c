@@ -324,6 +324,11 @@ int Init(void)
 {
   int i,j;
 
+  if(hver >= 2016)
+  {
+    tips = tips16;
+    get_hitran = cnv_hitran04;
+  } else
   if(hver >= 2012)
   {
     tips = tips12;

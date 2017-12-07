@@ -32,7 +32,7 @@ OBJ			= $(BINDIR)/strutil.o
 OBJ1			= $(BINDIR)/strutil.o $(BINDIR)/numutil.o
 OBJ2			= $(BINDIR)/novas.o $(BINDIR)/novascon.o $(BINDIR)/solsys2.o $(BINDIR)/readeph0.o $(BINDIR)/jplint.o $(BINDIR)/jplsubs.o
 OBJ3			= $(BINDIR)/astro_common.o
-OBJ4			= $(BINDIR)/BD_TIPS_2004.o $(BINDIR)/BD_TIPS_2008.o $(BINDIR)/BD_TIPS_2012.o
+OBJ4			= $(BINDIR)/BD_TIPS_2004.o $(BINDIR)/BD_TIPS_2008.o $(BINDIR)/BD_TIPS_2012.o $(BINDIR)/BD_TIPS_2016.o
 OBJ5			= $(BINDIR)/fftvoigt.o
 OBJ6			= $(BINDIR)/faddeeva.o
 OBJS			= $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4) $(OBJ5) $(OBJ6)
@@ -76,6 +76,8 @@ $(BINDIR)/BD_TIPS_2008.o: BD_ISO_2008.for BD_MOL_2008.for BD_TIPS_2008.for Isoto
 			$(FC) -c BD_TIPS_2008.for -o $@
 $(BINDIR)/BD_TIPS_2012.o: BD_ISO_2012.for BD_MOL_2012.for BD_TIPS_2012.for Isotops_2012.cmn Molec_2012.cmn Species_2012.cmn
 			$(FC) -c BD_TIPS_2012.for -o $@
+$(BINDIR)/BD_TIPS_2016.o: BD_ISO_2016.for BD_MOL_2016.for BD_TIPS_2016.for Isotops_2016.cmn Molec_2016.cmn Species_2016.cmn
+			$(FC) -c BD_TIPS_2016.for -ffixed-line-length-132 -o $@
 $(BINDIR)/fftvoigt.o	: fftvoigt.c
 			$(CC) -c fftvoigt.c  -o $@ $(WARNING)
 $(BINDIR)/faddeeva.o	: faddeeva.f

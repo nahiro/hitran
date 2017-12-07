@@ -142,6 +142,7 @@ int get_hitran04(char *s,struct hitran04 *h);
 int cnv_hitran04(char *s,struct hitran96 *h);
 int get_chr(char *str,int start,int size,char *value);
 int get_int(char *str,int start,int size,int *value);
+int get_hex(char *str,int start,int size,int *value);
 int get_dbl(char *str,int start,int size,double *value);
 extern void bd_tips_2004_();
 extern void bd_tips_2008_();
@@ -872,7 +873,7 @@ int get_hitran96(char *s,struct hitran96 *h)
   err = 0;
   n = 0;
   if(get_int(temp,n, 2,&h->nmol) < 0) err = 1; n +=  2;
-  if(get_int(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
+  if(get_hex(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
   if(get_dbl(temp,n,12,&h->freq) < 0) err = 1; n += 12;
   if(get_dbl(temp,n,10,&h->sint) < 0) err = 1; n += 10;
   if(get_dbl(temp,n,10,&h->mtrn) < 0) err = 1; n += 10;
@@ -925,7 +926,7 @@ int get_hitran04(char *s,struct hitran04 *h)
   err = 0;
   n = 0;
   if(get_int(temp,n, 2,&h->nmol) < 0) err = 1; n +=  2;
-  if(get_int(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
+  if(get_hex(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
   if(get_dbl(temp,n,12,&h->freq) < 0) err = 1; n += 12;
   if(get_dbl(temp,n,10,&h->sint) < 0) err = 1; n += 10;
   if(get_dbl(temp,n,10,&h->aein) < 0) err = 1; n += 10;
@@ -990,7 +991,7 @@ int cnv_hitran04(char *s,struct hitran96 *h)
   err = 0;
   n = 0;
   if(get_int(temp,n, 2,&h->nmol) < 0) err = 1; n +=  2;
-  if(get_int(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
+  if(get_hex(temp,n, 1,&h->niso) < 0) err = 1; n +=  1;
   if(get_dbl(temp,n,12,&h->freq) < 0) err = 1; n += 12;
   if(get_dbl(temp,n,10,&h->sint) < 0) err = 1; n += 10;
   if(get_dbl(temp,n,10,&dtmp)    < 0) err = 1; n += 10;
@@ -1087,6 +1088,49 @@ int get_int(char *str,int start,int size,int *value)
     if(errno==ERANGE || *endp!='\0')
     {
       fprintf(stderr,"get_int: convert error >>> %s\n",strm);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+int get_hex(char *str,int start,int size,int *value)
+{
+  int i,j;
+  char temp[MAXCHAR];
+  char strm[MAXCHAR];
+  char *endp;
+
+  if(start<0 || size<0)
+  {
+    fprintf(stderr,"get_hex: invalid input >>> %d,%d\n",start,size);
+    return -1;
+  } else
+  if(start+size >= MAXCHAR)
+  {
+    fprintf(stderr,"get_hex: out of range >>> %d,%d\n",start,size);
+    return -1;
+  }
+
+  for(i=start,j=0; i<start+size; i++,j++)
+  {
+    temp[j] = *(str+i);
+  }
+  temp[j] = '\0';
+  strm[0] = '\0';
+  sscanf(temp,"%s",strm);
+  if(strlen(strm) < 1)
+  {
+    *value = -1;
+  }
+  else
+  {
+    errno = 0;
+    *value = strtol(strm,&endp,16);
+    if(errno==ERANGE || *endp!='\0')
+    {
+      fprintf(stderr,"get_hex: convert error >>> %s\n",strm);
       return -1;
     }
   }

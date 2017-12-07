@@ -1,0 +1,4 @@
+c++:  bd-MOL
+      CHARACTER*6 MOLID
+c++:  bd-MOL
+      COMMON/MOLNAM_2008/MOLID(0:NMOL)

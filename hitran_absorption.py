@@ -34,8 +34,8 @@ MIXR = 390.0e-6      # Mixing ratio in mol/mol
 
 # Read options
 parser = OptionParser(formatter=IndentedHelpFormatter(max_help_position=200,width=200))
-parser.add_option('-D','--pardir',default=None,help='Data directory (%s)'%(HITRAN2012_PARDIR))
-parser.add_option('-M','--molparam',default=None,help='Molecular parameter file (%s)'%(HITRAN2012_MOLPARAM))
+parser.add_option('-D','--pardir',default=None,help='Data directory ({})'.format(HITRAN2012_PARDIR))
+parser.add_option('-M','--molparam',default=None,help='Molecular parameter file ({})'.format(HITRAN2012_MOLPARAM))
 parser.add_option('-H','--hver',default=HVER,type='int',help='HITRAN version (%default)')
 parser.add_option('-N','--spec',default=SPEC,type='int',help='Species number (%default)')
 parser.add_option('-I','--niso',default=None,type='int',help='Isotope number (%default)')
@@ -91,31 +91,31 @@ with open(opts.molparam,'r') as fp:
             rat[nam] = []
             mas[nam] = []
             if len(mol) != num:
-                raise ValueError('Error, len(mol)=%d, num=%d >>> %s'%(len(mol),num,line))
+                raise ValueError('Error, len(mol)={}, num={} >>> {}'.format(len(mol),num,line))
         elif not re.search('Mol',line):
             item = line.split()
             if len(item) != 5:
-                raise ValueError('Error, len(item)=%d >>> %s'%(len(item),line))
+                raise ValueError('Error, len(item)={} >>> {}'.format(len(item),line))
             iso[nam].append(item[0])
             rat[nam].append(float(item[1]))
             mas[nam].append(float(item[4]))
 if opts.show:
-    for i,spec in mol.iteritems():
-        print '%2d %-6s'%(i,spec),
+    for i,spec in mol.items():
+        sys.stdout.write('{:2d} {:6s}'.format(i,spec))
         for j in range(len(iso[spec])):
-            print ' (%d) %-4s'%(j+1,iso[spec][j]),
-        print ''
+            sys.stdout.write(' ({:2d}) {:4s}'.format(j+1,iso[spec][j]))
+        sys.stdout.write('\n')
     sys.exit(0)
-if not mol.has_key(opts.spec):
-    raise LookupError('Invalid species number >>> %d'%(opts.spec))
+if not opts.spec in mol:
+    raise LookupError('Invalid species number >>> {}'.format(opts.spec))
 
 spec = mol[opts.spec]
 if opts.niso is not None:
-    fnam = 'hitran_absorption_%s_%s.dat'%(spec,iso[spec][opts.niso-1])
+    fnam = 'hitran_absorption_{}_{}.dat'.format(spec,iso[spec][opts.niso-1])
 else:
-    fnam = 'hitran_absorption_%s.dat'%(spec)
-command = 'hitran_absorption -n %d -x %.6e -X %.6e'%(opts.hver,opts.xmin,opts.xmax)
-command += ' -D %.6e -W %.6e'%(opts.xstp,opts.wgam)
+    fnam = 'hitran_absorption_{}.dat'.format(spec)
+command = 'hitran_absorption -n {} -x {:.6e} -X {:.6e}'.format(opts.hver,opts.xmin,opts.xmax)
+command += ' -D {:.6e} -W {:.6e}'.format(opts.xstp,opts.wgam)
 if opts.xuni == 'nm':
     command += ' -U 1'
     unit = 'Wavelength (nm)'
@@ -130,16 +130,16 @@ elif opts.xuni == 'GHz':
     unit = 'Frequency (GHz)'
 else:
     raise ValueError('Error, XUNI should be nm, cm-1, Hz, or GHz')
-title = '%s'%(re.sub('(\d+)',r'$_{\1}$',spec))
+title = '{}'.format(re.sub('(\d+)',r'$_{\1}$',spec))
 if opts.niso is not None:
-    command += ' -N %d'%(opts.niso)
-    title += '_%s'%(iso[spec][opts.niso-1])
+    command += ' -N {}'.format(opts.niso)
+    title += '_{}'.format(iso[spec][opts.niso-1])
     if opts.riso > 0.0:
         riso = rat[spec][opts.niso-1]/opts.riso
-        command += ' -r %.6e'%(riso)
-        title += ' (%.2e)'%(opts.riso)
+        command += ' -r {:.6e}'.format(riso)
+        title += ' ({:.2e})'.format(opts.riso)
     else:
-        title += ' (%.2e)'%(rat[spec][opts.niso-1])
+        title += ' ({:.2e})'.format(rat[spec][opts.niso-1])
 if not opts.lorentz:
     if opts.niso is None:
         sr = 0.0
@@ -150,9 +150,9 @@ if not opts.lorentz:
         mass = sm/sr
     else:
         mass = mas[spec][opts.niso-1]
-    command += ' -M %.4f'%(mass)
-command += ' -p %.6e -o %.6e -R %.6e'%(opts.pres,opts.temp,opts.mixr)
-command += ' <%s >%s'%(os.path.join(opts.pardir,'%02d_hit%02d.par'%(opts.spec,opts.hver%100)),fnam)
+    command += ' -M {:.4f}'.format(mass)
+command += ' -p {:.6e} -o {:.6e} -R {:.6e}'.format(opts.pres,opts.temp,opts.mixr)
+command += ' <{} >{}'.format(os.path.join(opts.pardir,'{:02d}_hit{:02d}.par'.format(opts.spec,opts.hver%100)),fnam)
 call(command,shell=True)
 x,y = np.loadtxt(fnam,unpack=True)
 if not opts.batch:
@@ -171,15 +171,15 @@ if opts.ymin is not None:
 if opts.ymax is not None:
     ax1.set_ylim(top=opts.ymax)
 ax1.set_title(title,y=1.06)
-ax1.text(0.5,1.01,'T: %.1f (K), P: %.2e (atm), VMR: %.2e'%(opts.temp,opts.pres,opts.mixr),
+ax1.text(0.5,1.01,'T: {:.1f} (K), P: {:.2e} (atm), VMR: {:.2e}'.format(opts.temp,opts.pres,opts.mixr),
          transform=ax1.transAxes,ha='center',va='bottom',size=14)
 ax1.set_xlabel(unit)
 ax1.set_ylabel('Absorption Cross-Section (cm$^{2}$/molecule)')
 ax1.xaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
 ax1.xaxis.set_tick_params(pad=7)
 if opts.niso is not None:
-    plt.savefig('hitran_absorption_%s_%s.pdf'%(spec,iso[spec][opts.niso-1]))
+    plt.savefig('hitran_absorption_{}_{}.pdf'.format(spec,iso[spec][opts.niso-1]))
 else:
-    plt.savefig('hitran_absorption_%s.pdf'%(spec))
+    plt.savefig('hitran_absorption_{}.pdf'.format(spec))
 if not opts.batch:
     plt.draw()

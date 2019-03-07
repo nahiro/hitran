@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <math.h>
-#include <bits/nan.h>
+//#include <bits/nan.h>
 #include "strutil.h"
 #include "hitran_common.c"
 

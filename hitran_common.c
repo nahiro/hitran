@@ -44,7 +44,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
-#include <bits/nan.h>
+//#include <bits/nan.h>
 #include <errno.h>
 #include <gsl/gsl_spline.h>
 #include "faddeeva.h"

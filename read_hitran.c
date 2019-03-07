@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
-#include <bits/nan.h>
+//#include <bits/nan.h>
 
 #define		HITRAN_LINE_LENGTH		100
 #define		HITRAN_NITEM			17

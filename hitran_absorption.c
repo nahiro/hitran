@@ -492,7 +492,7 @@ int GetOpt(int argn,char **args)
       case 'p':
         errno = 0;
         xtmp = strtod(optarg,&p);
-        if(errno!=ERANGE && *p=='\0' && xtmp>0.0 && xtmp<10.0) pout = xtmp;
+        if(errno!=ERANGE && *p=='\0' && xtmp>0.0 && xtmp<200.0) pout = xtmp;
         else
         {
           fprintf(stderr,"Pressure -> out of range %s\n",optarg);

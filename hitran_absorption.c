@@ -112,7 +112,7 @@ int main(int argc,char **argv)
             fprintf(stderr,"%13.6e %13.6e\n",xo,xs);
           }
         }
-        wg = GAUSS_FWHM*xsgm*wsgm;
+        wg = MAX(GAUSS_FWHM*xsgm*wsgm,lwid);
         i1 = (int)((xo-wg-xmin)/xstp);
         i2 = (int)((xo+wg-xmin)/xstp)+1;
         if(i1 < 0) i1 = 0;
@@ -128,7 +128,7 @@ int main(int argc,char **argv)
         fw = width(tout,pout,pout*rmix,&h);
         xw = fw*1.0e-7*xo*xo;
         wl = LOREN_FWHM*xw*wgam;
-        wg = GAUSS_FWHM*dwid*xo*wsgm;
+        wg = MAX(GAUSS_FWHM*dwid*xo*wsgm,lwid);
         if(wg > wl)
         {
           i1 = imax-(int)((xo+wg-xmin)/xstp)-1;
@@ -151,7 +151,7 @@ int main(int argc,char **argv)
       {
         fw = width(tout,pout,pout*rmix,&h);
         xw = fw*1.0e-7*xo*xo;
-        wl = LOREN_FWHM*xw*wgam;
+        wl = MAX(LOREN_FWHM*xw*wgam,lwid);
         if(db)
         {
           fprintf(stderr,"%13.6e %13.6e %13.6e\n",fo,fs,fw);
@@ -226,7 +226,7 @@ int main(int argc,char **argv)
             fprintf(stderr,"%13.6e %13.6e\n",xo,xs);
           }
         }
-        wg = GAUSS_FWHM*xsgm*wsgm;
+        wg = MAX(GAUSS_FWHM*xsgm*wsgm,lwid);
         i1 = (int)((xo-wg-xmin)/xstp);
         i2 = (int)((xo+wg-xmin)/xstp)+1;
         if(i1 < 0) i1 = 0;
@@ -242,7 +242,7 @@ int main(int argc,char **argv)
         fw = width(tout,pout,pout*rmix,&h);
         xw = fw*xf;
         wl = LOREN_FWHM*xw*wgam;
-        wg = GAUSS_FWHM*dwid*xo*wsgm;
+        wg = MAX(GAUSS_FWHM*dwid*xo*wsgm,lwid);
         if(wg > wl)
         {
           i1 = (int)((xo-wg-xmin)/xstp);
@@ -265,7 +265,7 @@ int main(int argc,char **argv)
       {
         fw = width(tout,pout,pout*rmix,&h);
         xw = fw*xf;
-        wl = LOREN_FWHM*xw*wgam;
+        wl = MAX(LOREN_FWHM*xw*wgam,lwid);
         if(db)
         {
           fprintf(stderr,"%13.6e %13.6e %13.6e\n",fo,fs,fw);
@@ -344,10 +344,6 @@ int Init(void)
   {
     tips = tips96;
     get_hitran = get_hitran96;
-    if(get_coeff() < 0)
-    {
-      return -1;
-    }
   }
 
   if(!isnan(mass))
@@ -684,7 +680,7 @@ int Usage(void)
   fprintf(stderr," h -help    |%s|%s|%s| %d\n",As(e,"Help    mode",n),  As(a,"nothing",n),    Ad(d,0,n),1);
   fprintf(stderr,"-----------------------------------------------------------------------------\n");
   fprintf(stderr,"Line shape is determined as follows:\n");
-  fprintf(stderr,"    xsgm is given -> Gaussian (useful for simulation of low-resolution spectrometers)\n");
+  fprintf(stderr,"    xsgm is given -> Gaussian (useful for simulating low-resolution spectrometers)\n");
   fprintf(stderr,"    mass is given -> Voigt\n");
   fprintf(stderr,"    otherwise -> Lorentzian\n");
   fprintf(stderr,"Calculation range is determined as\n");

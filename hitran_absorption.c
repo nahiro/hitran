@@ -15,8 +15,7 @@
 
 #define		TOUT			300.0			// Output temperature in K
 #define		POUT			1.0			// Output pressure in atm
-#define		ZOUT			NAN			// Output altitude in km
-#define		RMIX			NAN			// Volume mixing ratio in mol/mol
+#define		RMIX			1.0e-4			// Volume mixing ratio in mol/mol
 #define		RISO			1.0			// Abundance ratio in mol/mol
 #define		MASS			NAN			// Mass in g/mol
 #define		XMIN			350.0			// X min
@@ -37,7 +36,6 @@
 
 double		tout			= TOUT;			// Output temperature in K
 double		pout			= POUT;			// Output pressure in atm
-double		zout			= ZOUT;			// Output altitude in km
 double		rmix			= RMIX;			// Volume mixing ratio in mol/mol
 double		riso			= RISO;			// Abundance ratio in mol/mol
 double		mass			= MASS;			// Mass in g/mol
@@ -65,10 +63,6 @@ int Init(void);
 int GetOpt(int argn,char **args);
 int Usage(void);
 int (*get_hitran)(char *s,struct hitran96 *h);
-double pressure(double z);
-double temperature(double z);
-double air(double z);
-double h2o(double z);
 
 int main(int argc,char **argv)
 {
@@ -410,33 +404,6 @@ int Init(void)
   return 0;
 }
 
-double pressure(double z)
-{
-  return 1.00527*exp(-z/7.8364); // atm
-}
-
-double temperature(double z)
-{
-  if(z < 12.25)
-  {
-    return 297.2-6.105*z;
-  }
-  else
-  {
-    return 310.38-12.88*z+0.56183*z*z-8.3034e-3*z*z*z+3.7879e-5*z*z*z*z; // K
-  }
-}
-
-double air(double z)
-{
-  return 2.55e19*exp(-z/8.5098); // cm-3
-}
-
-double h2o(double z)
-{
-  return 5.3703e17*exp(-z/1.8325); // cm-3
-}
-
 int GetOpt(int argn,char **args)
 {
   int c,rt;
@@ -450,7 +417,6 @@ int GetOpt(int argn,char **args)
     {"dnam",1,0,'f'},
     {"tout",1,0,'o'},
     {"pout",1,0,'p'},
-    {"zout",1,0,'z'},
     {"rmix",1,0,'R'},
     {"riso",1,0,'r'},
     {"niso",1,0,'N'},
@@ -498,16 +464,6 @@ int GetOpt(int argn,char **args)
         else
         {
           fprintf(stderr,"Pressure -> out of range %s\n",optarg);
-          rt = -1;
-        }
-        break;
-      case 'z':
-        errno = 0;
-        xtmp = strtod(optarg,&p);
-        if(errno!=ERANGE && *p=='\0' && xtmp>=0.0) zout = xtmp;
-        else
-        {
-          fprintf(stderr,"Altitude -> out of range %s\n",optarg);
           rt = -1;
         }
         break;
@@ -679,25 +635,8 @@ int GetOpt(int argn,char **args)
     }
   }
 
-  if(!isnan(zout))
-  {
-    tout = temperature(zout);
-    pout = pressure(zout);
-  }
-  if(isnan(rmix))
-  {
-    if(isnan(zout))
-    {
-      zout = 0.0;
-    }
-    rmix = h2o(zout)/air(zout);
-  }
   if(vb>1 || hp)
   {
-    if(!isnan(zout))
-    {
-      fprintf(stderr,"Altitude    : %13.2f km\n",zout);
-    }
     fprintf(stderr,"Temperature : %13.2f K\n",tout);
     fprintf(stderr,"Pressure    : %13.5f atm\n",pout);
     fprintf(stderr,"Mixing ratio: %13.6e mol/mol\n",rmix);
@@ -731,8 +670,7 @@ int Usage(void)
   fprintf(stderr," f -dnam    |%s|%s|%s| %s\n",As(e,"Data file",n),     As(a,"name",n),       As(d,DNAM,n),dnam);
   fprintf(stderr," o -tout    |%s|%s|%s| %e\n",As(e,"Temperature",n),   As(a,"K",n),          Af(d,TOUT,n),tout);
   fprintf(stderr," p -pout    |%s|%s|%s| %e\n",As(e,"Pressure",n),      As(a,"atm",n),        Af(d,POUT,n),pout);
-  fprintf(stderr," z -zout    |%s|%s|%s| %e\n",As(e,"Altitude",n),      As(a,"km",n),         Af(d,0.0,n),zout);
-  fprintf(stderr," R -rmix    |%s|%s|%s| %e\n",As(e,"Mixing ratio ",n), As(a,"mol/mol",n),    Ae(d,h2o(0)/air(0),n),rmix);
+  fprintf(stderr," R -rmix    |%s|%s|%s| %e\n",As(e,"Mixing ratio ",n), As(a,"mol/mol",n),    Ae(d,RMIX,n),rmix);
   fprintf(stderr," r -riso    |%s|%s|%s| %e\n",As(e,"Abundance ratio ",n),As(a,"mol/mol",n),  Ae(d,RISO,n),riso);
   fprintf(stderr," N -niso    |%s|%s|%s| %d\n",As(e,"Isotope ID",n),    As(a,"#",n),          Ad(d,NISO,n),niso);
   fprintf(stderr," M -mass    |%s|%s|%s| %e\n",As(e,"Mass",n),          As(a,"g/mol",n),      Af(d,MASS,n),mass);
@@ -750,9 +688,6 @@ int Usage(void)
   fprintf(stderr," v -verbose |%s|%s|%s| %d\n",As(e,"Verbose mode",n),  As(a,"nothing",n),    Ad(d,0,n),vb);
   fprintf(stderr," h -help    |%s|%s|%s| %d\n",As(e,"Help    mode",n),  As(a,"nothing",n),    Ad(d,0,n),1);
   fprintf(stderr,"-----------------------------------------------------------------------------\n");
-  fprintf(stderr,"The zout option is used to calculate temperature, pressure, and partial pressure of H2O.\n");
-  fprintf(stderr,"They can be set individually using the tout, pout, and rmix options.\n");
-  fprintf(stderr,"Note: use the rmix option for molecules other than H2O.\n");
   fprintf(stderr,"Line shape is determined as follows:\n");
   fprintf(stderr,"    xsgm is given -> Gaussian (useful for simulation of low-resolution spectrometers)\n");
   fprintf(stderr,"    mass is given -> Voigt\n");

@@ -30,13 +30,9 @@
 #define		MAXISO08		20
 #define		MAXISO12		20
 #define		MAXISO16		20
-#define		NSPECI			85
-#define		NRANGE			3
-#define		NPOL			4
 #define		HITRAN96_LINE_LENGTH	100
 #define		HITRAN04_LINE_LENGTH	160
 #define		TREF			296.0			// Reference temperature in K
-#define		DNAM			"qt.dat"
 #define		EPSILON			0.00001
 #define		MAXCHAR			256
 #include <stdio.h>
@@ -47,6 +43,7 @@
 //#include <bits/nan.h>
 #include <errno.h>
 #include <gsl/gsl_spline.h>
+#include "qt_1996.h"
 #include "faddeeva.h"
 
 static inline double MIN(double a,double b)
@@ -117,10 +114,6 @@ struct hitran04
 };
 
 double		tref			= TREF;
-int		isonm[NMOL96];
-double		qref[NSPECI];
-double		qcoef[NRANGE][NSPECI][NPOL];
-char		dnam[MAXCHAR]		= DNAM;
 
 double tips96(int im,int ii,double t);
 double tips04(int im,int ii,double t);
@@ -136,7 +129,6 @@ double gauss(double g,double f0,double f);
 int add_lorentz(double gamma,double xc,double norm,int n,const double *x,double *y);
 int add_gauss(double sigma,double xc,double norm,int n,const double *x,double *y);
 int add_voigt(double sigma,double gamma,double x0,double area,int np,const double *xp,double *yp);
-int get_coeff(void);
 int get_hitran96(char *s,struct hitran96 *h);
 int get_hitran04(char *s,struct hitran04 *h);
 int cnv_hitran04(char *s,struct hitran96 *h);
@@ -149,216 +141,6 @@ extern void bd_tips_2008_();
 extern void bd_tips_2012_();
 extern void bd_tips_2016_();
 
-int get_coeff(void)
-{
-  int i,j,n;
-  int err;
-  int n1,n2;
-  char line[MAXCHAR];
-  char str1[MAXCHAR];
-  char str2[MAXCHAR];
-  char str3[MAXCHAR];
-  char str4[MAXCHAR];
-  char *endp;
-  FILE *fp;
-
-  if((fp=fopen(dnam,"r")) == NULL)
-  {
-    fprintf(stderr,"Error, cannot open %s\n",dnam);
-    return -1;
-  }
-  err = 0;
-  do
-  {
-    n = 1;
-    if(fgets(line,MAXCHAR,fp) == NULL)
-    {
-      fprintf(stderr,"Error in reading line %d.\n",n);
-      err = 1;
-      break;
-    }
-    if(sscanf(line,"%s%s",str1,str2)!=2 || strcmp(str1,"NMOL")!=0 || strcmp(str2,"NSPECI")!=0)
-    {
-      fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-      err = 1;
-      break;
-    }
-    n++;
-    if(fgets(line,MAXCHAR,fp) == NULL)
-    {
-      fprintf(stderr,"Error in reading line %d.\n",n);
-      err = 1;
-      break;
-    }
-    if(sscanf(line,"%d%d",&n1,&n2)!=2 || n1!=NMOL96 || n2!=NSPECI)
-    {
-      fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-      err = 1;
-      break;
-    }
-    n++;
-    if(fgets(line,MAXCHAR,fp) == NULL)
-    {
-      fprintf(stderr,"Error in reading line %d.\n",n);
-      err = 1;
-      break;
-    }
-    if(sscanf(line,"%s",str1)!=1 || strcmp(str1,"ISONM")!=0)
-    {
-      fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-      err = 1;
-      break;
-    }
-    for(i=0; i<NMOL96; i++)
-    {
-      n++;
-      if(fgets(line,MAXCHAR,fp) == NULL)
-      {
-        fprintf(stderr,"Error in reading line %d.\n",n);
-        err = 1;
-        break;
-      }
-      if(sscanf(line,"%s",str1) != 1)
-      {
-        fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-        err = 1;
-        break;
-      }
-      errno = 0;
-      isonm[i] = strtol(str1,&endp,10);
-      if(errno==ERANGE || *endp!='\0')
-      {
-        fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-        err = 1;
-        break;
-      }
-    }
-    if(err) break;
-    n++;
-    if(fgets(line,MAXCHAR,fp) == NULL)
-    {
-      fprintf(stderr,"Error in reading line %d.\n",n);
-      err = 1;
-      break;
-    }
-    if(sscanf(line,"%s",str1)!=1 || strcmp(str1,"Q296")!=0)
-    {
-      fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-      err = 1;
-      break;
-    }
-    for(i=0; i<NSPECI; i++)
-    {
-      n++;
-      if(fgets(line,MAXCHAR,fp) == NULL)
-      {
-        fprintf(stderr,"Error in reading line %d.\n",n);
-        err = 1;
-        break;
-      }
-      if(sscanf(line,"%s",str1) != 1)
-      {
-        fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-        err = 1;
-        break;
-      }
-      errno = 0;
-      qref[i] = strtod(str1,&endp);
-      if(errno==ERANGE || *endp!='\0')
-      {
-        fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-        err = 1;
-        break;
-      }
-    }
-    if(err) break;
-    for(j=0; j<NRANGE; j++)
-    {
-      n++;
-      if(fgets(line,MAXCHAR,fp) == NULL)
-      {
-        fprintf(stderr,"Error in reading line %d.\n",n);
-        err = 1;
-        break;
-      }
-      if(sscanf(line,"%s%s%s%s",str1,str2,str3,str4)!=4 || strncmp(str1,"QCOEF",5)!=0
-                                                        || strncmp(str2,"QCOEF",5)!=0
-                                                        || strncmp(str3,"QCOEF",5)!=0
-                                                        || strncmp(str4,"QCOEF",5)!=0)
-      {
-        fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-        err = 1;
-        break;
-      }
-      for(i=0; i<NSPECI; i++)
-      {
-        n++;
-        if(fgets(line,MAXCHAR,fp) == NULL)
-        {
-          fprintf(stderr,"Error in reading line %d.\n",n);
-          err = 1;
-          break;
-        }
-        if(sscanf(line,"%s%s%s%s",str1,str2,str3,str4) != 4)
-        {
-          fprintf(stderr,"Error in line %d >>> %s\n",n,line);
-          err = 1;
-          break;
-        }
-        errno = 0;
-        qcoef[j][i][0] = strtod(str1,&endp);
-        if(errno==ERANGE || *endp!='\0')
-        {
-          fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-          err = 1;
-          break;
-        }
-        errno = 0;
-        qcoef[j][i][1] = strtod(str2,&endp);
-        if(errno==ERANGE || *endp!='\0')
-        {
-          fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-          err = 1;
-          break;
-        }
-        errno = 0;
-        qcoef[j][i][2] = strtod(str3,&endp);
-        if(errno==ERANGE || *endp!='\0')
-        {
-          fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-          err = 1;
-          break;
-        }
-        errno = 0;
-        qcoef[j][i][3] = strtod(str4,&endp);
-        if(errno==ERANGE || *endp!='\0')
-        {
-          fprintf(stderr,"Convert error in line %d >>> %s\n",n,line);
-          err = 1;
-          break;
-        }
-      }
-      if(err) break;
-    }
-    if(err) break;
-    n++;
-    if(fgets(line,MAXCHAR,fp) != NULL)
-    {
-      fprintf(stderr,"Error, too many lines %d.\n",n);
-      err = 1;
-      break;
-    }
-  }
-  while(0);
-  fclose(fp);
-  if(err)
-  {
-    return -1;
-  }
-
-  return 0;
-}
-
 double tips96(int im,int ii,double t)
 {
   int i,n;
@@ -368,7 +150,7 @@ double tips96(int im,int ii,double t)
 
   mol = im-1;
   iso = ii-1;
-  if(ii > isonm[mol])
+  if(ii > isonm96[mol])
   {
     fprintf(stderr,"No such isotope(%d) for molecule %d.\n",ii,im);
     return NAN;
@@ -377,13 +159,13 @@ double tips96(int im,int ii,double t)
   n = 0;
   for(i=0; i<mol; i++)
   {
-    n += isonm[i];
+    n += isonm96[i];
   }
   n += iso;
 
   if(fabs(t-tref) < EPSILON)
   {
-    qt = qref[n];
+    qt = qref96[n];
   }
   else
   {
@@ -404,10 +186,10 @@ double tips96(int im,int ii,double t)
     {
       irange = 2;
     }
-    qt  = qcoef[irange][n][0];
-    qt += qcoef[irange][n][1]*t;
-    qt += qcoef[irange][n][2]*t*t;
-    qt += qcoef[irange][n][3]*t*t*t;
+    qt  = qcoef96[irange][n][0];
+    qt += qcoef96[irange][n][1]*t;
+    qt += qcoef96[irange][n][2]*t*t;
+    qt += qcoef96[irange][n][3]*t*t*t;
   }
 
   return qt;

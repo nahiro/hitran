@@ -5,7 +5,7 @@
 /* $Revision: 171 $                                         */
 /* $Date: 2013-12-02 17:50:45 +0900 (Mon, 02 Dec 2013) $   */
 /***********************************************************/
-#include "hitran_common.c"
+#include "hitran_h2o_common.c"
 #include <getopt.h>
 #include "strutil.h"
 #include "numutil.h"

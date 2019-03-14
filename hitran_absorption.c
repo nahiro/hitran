@@ -414,7 +414,6 @@ int GetOpt(int argn,char **args)
   char *p;
   struct option long_options[] =
   {
-    {"dnam",1,0,'f'},
     {"tout",1,0,'o'},
     {"pout",1,0,'p'},
     {"rmix",1,0,'R'},
@@ -444,9 +443,6 @@ int GetOpt(int argn,char **args)
 
     switch(c)
     {
-      case 'f':
-        strncpy(dnam,optarg,MAXCHAR);
-        break;
       case 'o':
         errno = 0;
         xtmp = strtod(optarg,&p);
@@ -667,7 +663,6 @@ int Usage(void)
   fprintf(stderr,"hitran_absorption -[option] (argument) -[option] (argument) ...\n");
   fprintf(stderr,"-----------------------------------------------------------------------------\n");
   fprintf(stderr,"   option   |%s|%s|%s| current\n",As(e,"",n),         As(a,"argument",n),   As(d,"default",n));
-  fprintf(stderr," f -dnam    |%s|%s|%s| %s\n",As(e,"Data file",n),     As(a,"name",n),       As(d,DNAM,n),dnam);
   fprintf(stderr," o -tout    |%s|%s|%s| %e\n",As(e,"Temperature",n),   As(a,"K",n),          Af(d,TOUT,n),tout);
   fprintf(stderr," p -pout    |%s|%s|%s| %e\n",As(e,"Pressure",n),      As(a,"atm",n),        Af(d,POUT,n),pout);
   fprintf(stderr," R -rmix    |%s|%s|%s| %e\n",As(e,"Mixing ratio ",n), As(a,"mol/mol",n),    Ae(d,RMIX,n),rmix);

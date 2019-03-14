@@ -422,6 +422,7 @@ int GetOpt(int argn,char **args)
     {"xsgm",1,0,'S'},
     {"wsgm",1,0,'w'},
     {"wgam",1,0,'W'},
+    {"lwid",1,0,'l'},
     {"fair",1,0,'F'},
     {"xuni",1,0,'U'},
     {"hver",1,0,'n'},
@@ -434,7 +435,7 @@ int GetOpt(int argn,char **args)
   while(1)
   {
     this_option_optind = optind?optind:1;
-    c = getopt_long(argn,args,":f:o:p:z:R:r:N:M:x:X:D:S:w:W:F:U:n:dvh",long_options,&option_index);
+    c = getopt_long(argn,args,":o:p:R:r:N:M:x:X:D:S:w:W:l:F:U:n:dvh",long_options,&option_index);
     if(c == -1) break;
 
     switch(c)
@@ -556,6 +557,16 @@ int GetOpt(int argn,char **args)
         else
         {
           fprintf(stderr,"Lorentzian line width -> out of range %s\n",optarg);
+          rt = -1;
+        }
+        break;
+      case 'l':
+        errno = 0;
+        xtmp = strtod(optarg,&p);
+        if(errno!=ERANGE && *p=='\0' && xtmp>0.0) lwid = xtmp;
+        else
+        {
+          fprintf(stderr,"Line width -> out of range %s\n",optarg);
           rt = -1;
         }
         break;

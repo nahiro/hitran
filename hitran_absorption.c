@@ -23,8 +23,9 @@
 #define		XMAX			1050.0			// X max
 #define		XSTP			0.01			// X step
 #define		XSGM			NAN			// X sigma
-#define		WSGM			20.0			// Gaussian line width in sigma
-#define		WGAM			1.0e4			// Lorentzian line width in gamma
+#define		WSGM			20.0			// Gaussian line width in FWHM
+#define		WGAM			1.0e4			// Lorentzian line width in FWHM
+#define		LWID			0.0			// Line width in X unit
 #define		FAIR			1.0			// Gamma-air factor
 #define		NISO			-1			// Isotope ID
 #define		XUNI_NM			1			// Wavelength in nm
@@ -44,8 +45,9 @@ double		xmin			= XMIN;			// X min
 double		xmax			= XMAX;			// X max
 double		xstp			= XSTP;			// X step
 double		xsgm			= XSGM;			// X sigma
-double		wsgm			= WSGM;			// Gaussian line width in sigma
-double		wgam			= WGAM;			// Lorentzian line width in gamma
+double		wsgm			= WSGM;			// Gaussian line width in FWHM
+double		wgam			= WGAM;			// Lorentzian line width in FWHM
+double		lwid			= LWID;			// Line width in X unit
 double		fair			= FAIR;			// Gamma-air factor
 double		dwid			= 0.0;			// Doppler width factor
 double		*xval			= NULL;			// X array
@@ -738,8 +740,9 @@ int Usage(void)
   fprintf(stderr," X -xmax    |%s|%s|%s| %f\n",As(e,"X max  ",n),       As(a,"X unit   ",n),  Af(d,XMAX,n),xmax);
   fprintf(stderr," D -xstp    |%s|%s|%s| %f\n",As(e,"X step ",n),       As(a,"X unit(*)",n),  Af(d,XSTP,n),xstp);
   fprintf(stderr," S -xsgm    |%s|%s|%s| %f\n",As(e,"X sigma",n),       As(a,"X unit   ",n),  Af(d,XSGM,n),xsgm);
-  fprintf(stderr," w -wsgm    |%s|%s|%s| %f\n",As(e,"Gauss width",n),   As(a,"sigma",n),      Af(d,WSGM,n),wsgm);
-  fprintf(stderr," W -wgam    |%s|%s|%s| %f\n",As(e,"Lorentz width",n), As(a,"gamma",n),      Af(d,WGAM,n),wgam);
+  fprintf(stderr," w -wsgm    |%s|%s|%s| %f\n",As(e,"Gauss width",n),   As(a,"FWHM",n),       Af(d,WSGM,n),wsgm);
+  fprintf(stderr," W -wgam    |%s|%s|%s| %f\n",As(e,"Lorentz width",n), As(a,"FWHM",n),       Af(d,WGAM,n),wgam);
+  fprintf(stderr," l -lwid    |%s|%s|%s| %f\n",As(e,"Line width",n),    As(a,"X unit",n),     Af(d,LWID,n),lwid);
   fprintf(stderr," F -fair    |%s|%s|%s| %f\n",As(e,"G-air factor",n),  As(a,"factor",n),     Af(d,FAIR,n),fair);
   fprintf(stderr," U -xuni    |%s|%s|%s| %d\n",As(e,"X Unit",n),        As(a,"Unit#",n),      Ad(d,XUNI,n),xuni);
   fprintf(stderr," n -hver    |%s|%s|%s| %d\n",As(e,"HITRAN version",n),As(a,"version",n),    Ad(d,HVER,n),hver);
@@ -750,7 +753,13 @@ int Usage(void)
   fprintf(stderr,"The zout option is used to calculate temperature, pressure, and partial pressure of H2O.\n");
   fprintf(stderr,"They can be set individually using the tout, pout, and rmix options.\n");
   fprintf(stderr,"Note: use the rmix option for molecules other than H2O.\n");
-  fprintf(stderr,"The xsgm option is used to calculate Gauss profiles (default: Lorentz profile).\n");
+  fprintf(stderr,"Line shape is determined as follows:\n");
+  fprintf(stderr,"    xsgm is given -> Gaussian (useful for simulation of low-resolution spectrometers)\n");
+  fprintf(stderr,"    mass is given -> Voigt\n");
+  fprintf(stderr,"    otherwise -> Lorentzian\n");
+  fprintf(stderr,"Calculation range is determined as\n");
+  fprintf(stderr,"    MAX(xmin,MIN(xc-Gauss_FWHM*wsgm,xc-Lorentz_FWHM*wgam,xc-lwid)) ~\n");
+  fprintf(stderr,"    MIN(xmax,MAX(xc+Gauss_FWHM*wsgm,xc+Lorentz_FWHM*wgam,xc+lwid))\n");
   fprintf(stderr,"X Unit 1:nm 2:cm-1 3:Hz 4:GHz\n");
 
   return 0;

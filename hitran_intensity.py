@@ -16,6 +16,8 @@ HITRAN2008_PARDIR = '/usr/local/HITRAN/hitran08/HITRAN2008/By-Molecule/Uncompres
 HITRAN2008_MOLPARAM = '/usr/local/HITRAN/hitran08/Global_Data/molparam.txt'
 HITRAN2012_PARDIR = '/usr/local/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files'
 HITRAN2012_MOLPARAM = '/usr/local/HITRAN/HITRAN2012/Global-Data/molparam.txt'
+HITRAN2016_PARDIR = '/usr/local/HITRAN/HITRAN2016/HITRAN2016/By-Molecule/Uncompressed-files'
+HITRAN2016_MOLPARAM = '/usr/local/HITRAN/HITRAN2016/Global-Data/molparam.txt'
 
 # Default values
 HVER = 2012          # HITRAN version
@@ -30,8 +32,8 @@ TSTP = 10.0          # Step temperature in K
 
 # Read options
 parser = OptionParser(formatter=IndentedHelpFormatter(max_help_position=200,width=200))
-parser.add_option('-D','--pardir',default=None,help='Data directory (%s)'%(HITRAN2012_PARDIR))
-parser.add_option('-M','--molparam',default=None,help='Molecular parameter file (%s)'%(HITRAN2012_MOLPARAM))
+parser.add_option('-D','--pardir',default=None,help='Data directory ({})'.format(HITRAN2012_PARDIR))
+parser.add_option('-M','--molparam',default=None,help='Molecular parameter file ({})'.format(HITRAN2012_MOLPARAM))
 parser.add_option('-H','--hver',default=HVER,type='int',help='HITRAN version (%default)')
 parser.add_option('-N','--spec',default=SPEC,type='int',help='Species number (%default)')
 parser.add_option('-I','--niso',default=None,type='int',help='Isotope number (%default)')
@@ -54,6 +56,8 @@ if opts.pardir is None:
         opts.pardir = HITRAN2004_PARDIR
     elif opts.hver == 2008:
         opts.pardir = HITRAN2008_PARDIR
+    elif opts.hver == 2016:
+        opts.pardir = HITRAN2016_PARDIR
     else:
         opts.pardir = HITRAN2012_PARDIR
 if opts.molparam is None:
@@ -61,6 +65,8 @@ if opts.molparam is None:
         opts.molparam = HITRAN2004_MOLPARAM
     elif opts.hver == 2008:
         opts.molparam = HITRAN2008_MOLPARAM
+    elif opts.hver == 2016:
+        opts.molparam = HITRAN2016_MOLPARAM
     else:
         opts.molparam = HITRAN2012_MOLPARAM
 
@@ -79,29 +85,29 @@ with open(opts.molparam,'r') as fp:
             iso[nam] = []
             rat[nam] = []
             if len(mol) != num:
-                raise ValueError('Error, len(mol)=%d, num=%d >>> %s'%(len(mol),num,line))
+                raise ValueError('Error, len(mol)={}, num={} >>> {}'.format(len(mol),num,line))
         elif not re.search('Mol',line):
             item = line.split()
             if len(item) != 5:
-                raise ValueError('Error, len(item)=%d >>> %s'%(len(item),line))
+                raise ValueError('Error, len(item)={} >>> {}'.format(len(item),line))
             iso[nam].append(item[0])
             rat[nam].append(float(item[1]))
 if opts.show:
     for i,spec in mol.iteritems():
-        print '%2d %-6s'%(i,spec),
+        sys.stdout.write('{:2d} {:6s}'.format(i,spec))
         for j in range(len(iso[spec])):
-            print ' (%d) %-4s'%(j+1,iso[spec][j]),
-        print ''
+            sys.stdout.write(' {:2d} {:4s}'.format(j+1,iso[spec][j]))
+        sys.stdout.write('\n')
     sys.exit(0)
 if not mol.has_key(opts.spec):
-    raise LookupError('Invalid species number >>> %d'%(opts.spec))
+    raise LookupError('Invalid species number >>> {}'.format(opts.spec))
 
 spec = mol[opts.spec]
 if opts.niso is not None:
-    fnam = 'hitran_intensity_%s_%s.dat'%(spec,iso[spec][opts.niso-1])
+    fnam = 'hitran_intensity_{}_{}.dat'.format(spec,iso[spec][opts.niso-1])
 else:
-    fnam = 'hitran_intensity_%s.dat'%(spec)
-command = 'hitran_intensity -n %d -x %.6e -X %.6e'%(opts.hver,opts.xmin,opts.xmax)
+    fnam = 'hitran_intensity_{}.dat'.format(spec)
+command = 'hitran_intensity -n {} -x {:.6e} -X {:.6e}'.format(opts.hver,opts.xmin,opts.xmax)
 if opts.xuni == 'nm':
     command += ' -U 1'
     unit = 'Wavelength (nm)'
@@ -116,20 +122,20 @@ elif opts.xuni == 'GHz':
     unit = 'Frequency (GHz)'
 else:
     raise ValueError('Error, XUNI should be nm, cm-1, Hz, or GHz')
-title = '%s'%(re.sub('(\d+)',r'$_{\1}$',spec))
+title = '{}'.format(re.sub('(\d+)',r'$_{\1}$',spec))
 if opts.niso is not None:
-    command += ' -M %d'%(opts.niso)
-    title += '_%s'%(iso[spec][opts.niso-1])
+    command += ' -M {}'.format(opts.niso)
+    title += '_{}'.format(iso[spec][opts.niso-1])
     if opts.riso > 0.0:
         riso = rat[spec][opts.niso-1]/opts.riso
-        command += ' -r %.6e'%(riso)
-        title += ' (%.2e)'%(opts.riso)
+        command += ' -r {:.6e}'.format(riso)
+        title += ' ({:.2e})'.format(opts.riso)
     else:
-        title += ' (%.2e)'%(rat[spec][opts.niso-1])
-command += ' -t %.6e -T %.6e -S %.6e'%(opts.tmin,opts.tmax,opts.tstp)
+        title += ' ({:.2e})'.format(rat[spec][opts.niso-1])
+command += ' -t {:.6e} -T {:.6e} -S {:.6e}'.format(opts.tmin,opts.tmax,opts.tstp)
 if opts.lmod:
     command += ' -l'
-command += ' <%s >%s'%(os.path.join(opts.pardir,'%02d_hit%02d.par'%(opts.spec,opts.hver%100)),fnam)
+command += ' <{} >{}'.format(os.path.join(opts.pardir,'{:02d}_hit{:02d}.par'.format(opts.spec,opts.hver%100)),fnam)
 call(command,shell=True)
 if opts.tmax < opts.tmin:
     x,y = np.loadtxt(fnam,usecols=(0,1),unpack=True)
@@ -158,7 +164,7 @@ if x.size == 1:
         if np.fabs(t-tmp)<1.0e-5:
             yc = y
             ym = y*0.1
-            ax1.vlines(x,ym,yc,color=cm.jet((tmp-tmin)/tdif),label='%.0f'%(tmp))
+            ax1.vlines(x,ym,yc,color=cm.jet((tmp-tmin)/tdif),label='{:.0f}'.format(tmp))
 elif x.size > 1:
     for tmp in reversed(ts):
         cnd = (np.fabs(t-tmp)<1.0e-5)
@@ -166,7 +172,7 @@ elif x.size > 1:
             continue
         yc = y[cnd]
         ym = np.nanmin(yc)
-        ax1.vlines(x[cnd],ym,yc,color=cm.jet((tmp-tmin)/tdif),label='%.0f'%(tmp))
+        ax1.vlines(x[cnd],ym,yc,color=cm.jet((tmp-tmin)/tdif),label='{:.0f}'.format(tmp))
 ax1.set_xlim(opts.xmin,opts.xmax)
 if opts.ymin is not None:
     ax1.set_ylim(bottom=opts.ymin)
@@ -179,6 +185,6 @@ ax1.xaxis.set_major_formatter(plt.FormatStrFormatter('%.2f'))
 ax1.xaxis.set_tick_params(pad=7)
 lg = plt.legend(title='Temperature (K)',ncol=4)
 lg.get_frame().set_facecolor('None')
-plt.savefig('hitran_intensity_%s.pdf'%(spec))
+plt.savefig('hitran_intensity_{}.pdf'.format(spec))
 if not opts.batch:
     plt.draw()

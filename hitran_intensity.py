@@ -96,7 +96,7 @@ if opts.show:
     for i,spec in mol.iteritems():
         sys.stdout.write('{:2d} {:6s}'.format(i,spec))
         for j in range(len(iso[spec])):
-            sys.stdout.write(' {:2d} {:4s}'.format(j+1,iso[spec][j]))
+            sys.stdout.write(' ({:2d}) {:4s}'.format(j+1,iso[spec][j]))
         sys.stdout.write('\n')
     sys.exit(0)
 if not mol.has_key(opts.spec):
